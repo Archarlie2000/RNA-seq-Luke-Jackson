@@ -1,0 +1,81 @@
+---
+title: "KEGG Review"
+output:
+  html_document:
+    code_folding: hide
+    self_contained: no
+  pdf_document: default
+---
+
+<style type="text/css">
+.main-container {
+  max-width: 1800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(htmltools)
+library(DT)
+
+```
+
+
+```{r fig.height=8, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+# Read the data and name the first column as 'Pathway'
+kegg_results <- read.csv("../KEGG_Results/comprehensive_kegg_enrichment_results.csv")
+kegg_results$clean_name <- gsub("\\.tsv", "", gsub("_", " ", gsub("mapped_data_DEG_results_", "", kegg_results$Comparison)))
+
+
+colnames(kegg_results)[1] <- "Pathway"
+
+tables <- list()
+for (comp in unique(kegg_results$Comparison)) {
+  
+  # Filter data for the specific comparison
+  comp_data <- kegg_results %>% filter(Comparison == comp)
+  
+  # Aggregate by 'subcategory' and order by p.adjust
+  comp_data <- comp_data %>%
+    group_by(subcategory) %>%
+    arrange(p.adjust) %>%
+    ungroup()
+  
+  # Select top 10 results for the table
+  top10_data <- comp_data %>%
+    arrange(p.adjust) %>%
+    mutate(
+      p.adjust = round(-log10(p.adjust),1 ),
+      pvalue = round(-log10(pvalue),1 ),
+      qvalue = round(-log10(qvalue), 1),
+      Description = gsub(" ?- Mus musculus \\(house mouse\\)", "", Description)
+    ) %>%
+    dplyr::select(-Pathway, -qvalue, -Count, -ID)
+    
+  
+  
+  # Store the datatable in the list
+  tables[[comp]] <- DT::datatable(
+    top10_data %>% dplyr::select(-Comparison, -clean_name),
+              caption = paste("Enriched Pathways for:", unique(kegg_results$clean_name[kegg_results$Comparison == comp])),
+              options = list(pageLength = -1, scrollX = TRUE, dom = 't'),
+    rownames = FALSE)%>%
+  DT::formatStyle(
+    columns = colnames(top10_data %>% dplyr::select(-Comparison, -clean_name)),
+    `white-space` = 'nowrap',
+    `text-align` = 'center'
+  )
+  
+}
+
+# Render all tables
+htmltools::tagList(tables)
+
+```

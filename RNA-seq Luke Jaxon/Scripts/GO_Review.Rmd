@@ -1,0 +1,75 @@
+---
+title: "GO Analysis Results"
+output: 
+  html_document:
+    code_folding: hide
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r load-libraries, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringi)
+library(readr)
+library(viridis)
+library(stringr)  # For text wrapping
+```
+
+```{r plot-results, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+go_results <- read.csv("../GO_Results/go_combined_results_with_regulation.csv")
+
+# Select the top 10 GO terms for each source based on FDR
+top_genes <- go_results %>%
+  group_by(Source) %>%
+  arrange(FDR) %>%
+  dplyr::slice_head(n = 15)
+
+# Find the maximum -log10(FDR) value for consistent y-axis limits
+max_y_value <- max(-log10(top_genes$FDR), na.rm = TRUE)
+
+# Get unique sources
+unique_sources <- unique(top_genes$Source)
+top_genes$Source <- factor(top_genes$Source, levels = unique_sources)
+
+# Create a cleaned version of source names for plotting
+clean_sources <- gsub("_", " ", unique_sources)  # Replace underscores with spaces
+clean_sources <- gsub("\\.tsv$", "", clean_sources)  # Remove the ".tsv" extension
+clean_sources <- gsub("\\vs Control$", "", clean_sources)  # Remove the ".tsv" extension
+clean_sources <- gsub("\\DEG results ALL Cell", "", clean_sources)  # Remove the ".tsv" extension
+
+# Plotting loop for each source
+for (i in seq_along(unique_sources)) {
+  source <- unique_sources[i]        # Original source name for filtering
+  clean_source <- clean_sources[i]   # Cleaned source name for titles
+  
+  # Filter data using the original source name
+  source_data <- top_genes %>% filter(Source == source)
+  
+  # Wrap the descriptions and capitalize the first letter of each word
+  source_data$Description <- str_wrap(source_data$Description, width = 40)
+  
+  # Create the plot
+  p <- ggplot(source_data, aes(x = reorder(Description, -FDR),  # Flip the order by using -FDR
+                               y = -log10(FDR), 
+                               fill = Description)) +
+    geom_bar(stat = "identity") +
+    coord_flip() +
+    labs(title = paste("Top 10 GO Terms for", clean_source),
+         x = "",
+         y = "-log10(FDR)") +
+    theme_minimal() +
+    theme(axis.text.y = element_text(size = 8)) +
+    scale_fill_viridis_d(option = "C") +
+    guides(fill = "none") +
+    ylim(0, max_y_value)  # Set consistent y-axis limit
+  
+  print(p)
+}
+```

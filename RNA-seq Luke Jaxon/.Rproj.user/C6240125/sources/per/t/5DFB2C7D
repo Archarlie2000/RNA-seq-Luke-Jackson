@@ -1,0 +1,24 @@
+{
+    "id": "5DFB2C7D",
+    "path": "~/RNA-seq Luke Jaxon/KEGG_Results/DEG_results_ALL_Cell_Palm_vs_Control.tsv_kegg_enrichment_results.csv",
+    "project_path": "KEGG_Results/DEG_results_ALL_Cell_Palm_vs_Control.tsv_kegg_enrichment_results.csv",
+    "type": "text",
+    "hash": "3376223471",
+    "contents": "",
+    "dirty": false,
+    "created": 1729110632331.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Sourcexa3nzzbo789z"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1728950788,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1728950788,
+    "read_only": false,
+    "read_only_alternatives": []
+}
